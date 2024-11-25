@@ -1,0 +1,21 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>Blazor Notification</PageTitle>
+
+<div class="main">
+    <NavMenu />
+    <div class="content px-4">
+        @Body
+    </div>
+</div>
+
+<style>
+    .main {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .content {
+        flex: 1;
+    }
+</style>
