@@ -1,0 +1,77 @@
+﻿@page "/"
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient HttpClient
+@inject IHttpClientFactory HttpClientFactory
+
+<h3>Webhook Setup</h3>
+
+<div class="form-container">
+    <EditForm Model="WebhookRequest" OnValidSubmit="SubmitForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="projects">Projects (comma-separated)</label>
+            <InputTextArea id="projects" @bind-Value="WebhookRequest.ProjectNames" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label for="url">Webhook URL</label>
+            <InputText id="url" @bind-Value="WebhookRequest.WebhookUrl" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label for="pat">Personal Access Token (PAT)</label>
+            <InputText id="pat" @bind-Value="WebhookRequest.PAT" class="form-control" type="password" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </EditForm>
+</div>
+
+@if (Message != null)
+{
+    <p class="alert alert-info">@Message</p>
+}
+
+@code {
+    private WebhookSetupRequest WebhookRequest = new();
+    private string? Message;
+
+    private async Task SubmitForm()
+    {
+        Console.WriteLine("start");
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            client.BaseAddress =  new Uri("http://10.26.4.184:8080/");
+            var response = await client.PostAsJsonAsync("api/setup", WebhookRequest);
+            if (response.IsSuccessStatusCode)
+            {
+                Message = "Webhook setup successfully!";
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Message = $"Error: {error}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = $"Exception: {ex.Message}";
+        }
+    }
+
+    public class WebhookSetupRequest
+    {
+        [Required(ErrorMessage = "Project names are required")]
+        public string ProjectNames { get; set; }
+
+        [Required(ErrorMessage = "Webhook URL is required")]
+        [Url(ErrorMessage = "Invalid URL format")]
+        public string WebhookUrl { get; set; }
+
+        [Required(ErrorMessage = "PAT is required")]
+        public string PAT { get; set; }
+    }
+}
