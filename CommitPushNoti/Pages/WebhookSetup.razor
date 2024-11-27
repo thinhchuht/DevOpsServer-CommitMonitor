@@ -1,7 +1,6 @@
 ﻿@page "/"
-@using System.ComponentModel.DataAnnotations
-@inject HttpClient HttpClient
 @inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
 
 <h3>Webhook Setup</h3>
 
@@ -11,11 +10,6 @@
         <ValidationSummary />
 
         <div class="form-group">
-            <label for="projects">Projects (comma-separated)</label>
-            <InputTextArea id="projects" @bind-Value="WebhookRequest.ProjectNames" class="form-control" />
-        </div>
-
-        <div class="form-group">
             <label for="url">Webhook URL</label>
             <InputText id="url" @bind-Value="WebhookRequest.WebhookUrl" class="form-control" />
         </div>
@@ -23,6 +17,16 @@
         <div class="form-group">
             <label for="pat">Personal Access Token (PAT)</label>
             <InputText id="pat" @bind-Value="WebhookRequest.PAT" class="form-control" type="password" />
+        </div>
+
+        <div class="form-group">
+            <label for="collectionName">ColectionName</label>
+            <InputText id="collectionName" @bind-Value="WebhookRequest.CollectionName" class="form-control" type="text" />
+        </div>
+
+        <div class="form-group">
+            <label for="projectName">Project Name</label>
+            <InputText id="projectName" @bind-Value="WebhookRequest.ProjectName" class="form-control" type="text" />
         </div>
 
         <button type="submit" class="btn btn-primary">Submit</button>
@@ -40,11 +44,10 @@
 
     private async Task SubmitForm()
     {
-        Console.WriteLine("start");
         try
         {
             var client = HttpClientFactory.CreateClient();
-            client.BaseAddress =  new Uri("http://10.26.4.184:8080/");
+            client.BaseAddress = new Uri(Configuration["Urls:HostUrl"]);
             var response = await client.PostAsJsonAsync("api/setup", WebhookRequest);
             if (response.IsSuccessStatusCode)
             {
@@ -64,14 +67,15 @@
 
     public class WebhookSetupRequest
     {
-        [Required(ErrorMessage = "Project names are required")]
-        public string ProjectNames { get; set; }
+        public string CollectionName { get; set; }
+        public string ProjectName    { get; set; }
 
-        [Required(ErrorMessage = "Webhook URL is required")]
+        [Required(ErrorMessage ="Webhook URL is required")]
         [Url(ErrorMessage = "Invalid URL format")]
-        public string WebhookUrl { get; set; }
+        public string WebhookUrl     { get; set; }
 
         [Required(ErrorMessage = "PAT is required")]
         public string PAT { get; set; }
     }
+
 }

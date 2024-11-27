@@ -1,10 +1,6 @@
-﻿using CommitPushNoti.Data;
-using CommitPushNoti.Hubs;
-using Microsoft.AspNetCore.SignalR;
-
-namespace CommitPushNoti.Services
+﻿namespace CommitPushNoti.Services
 {
-    public class NotificationService
+    public class NotificationService : INotificationService
     {
         private readonly List<CommitNotification> _notifications = new();
         private readonly IHubContext<NotificationHub> _hubContext;

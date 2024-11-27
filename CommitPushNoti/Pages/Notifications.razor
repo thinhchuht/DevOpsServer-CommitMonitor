@@ -1,9 +1,5 @@
 ﻿@page "/notifications"
-@using CommitPushNoti.Data
-@using CommitPushNoti.Services
-@using Microsoft.AspNetCore.SignalR.Client
-@using System.Text.Json
-@inject NotificationService NotificationService
+@inject INotificationService NotificationService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 
@@ -42,6 +38,11 @@
     <button @onclick="PreviousPage" disabled="@(_currentPage == 1)">Previous</button>
     <span>Page @_currentPage of @totalPages</span>
     <button @onclick="NextPage" disabled="@(_currentPage == totalPages)">Next</button>
+</div>
+
+<div>
+    <h4>Received Notifications:</h4>
+    <pre>@JsonSerializer.Serialize(notifications, new JsonSerializerOptions { WriteIndented = true })</pre>
 </div>
 
 @code {
@@ -91,8 +92,14 @@
         if (firstRender)
         {
             connection = new HubConnectionBuilder()
-                .WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub"))
-                .Build();
+            .WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub"), options =>
+            {
+                options.HttpMessageHandlerFactory = _ => new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+                };
+            })
+            .Build();
 
             connection.On<CommitNotification>("ReceiveNotification", async notification =>
             {
