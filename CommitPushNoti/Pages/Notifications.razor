@@ -1,77 +1,81 @@
 ﻿@page "/notifications"
-@inject INotificationService NotificationService
-@inject IJSRuntime JSRuntime
+@inject ICommitDetailServices CommitDetailServices
+@using CommitPushNoti.Services.Interfaces
+@using CommitPushNoti.Infrastructures.Models
 @inject NavigationManager NavigationManager
+
 
 <h3>Notifications</h3>
 
 <table class="table">
     <thead>
         <tr>
-            <th>Collection</th>
-            <th>Project</th>
-            <th>Repository</th>
-            <th>Committer</th>
+            <th>Commit ID</th>
             <th>Commit Message</th>
+            <th>Committer</th>
             <th>Commit URL</th>
             <th>Created Date</th>
-            <th>Line Change</th>
+            <th>Line Changes</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var notification in notifications)
+        @foreach (var commit in commits)
         {
-            if (!(notification.Resource.Commits == null))
-            {
-                <tr>
-                    <td>@notification.CollectionName</td>
-                    <td>@notification.Resource.Repository.Project.Name</td>
-                    <td>@notification.Resource.Repository.Name</td>
-                    <td>@notification.Resource.Commits.FirstOrDefault()?.Author.Name</td>
-                    <td>@notification.Resource.Commits.FirstOrDefault()?.Comment</td>
-                    <td><a href="@notification.CommitUrl" target="_blank">View Commit</a></td>
-                    <td>@notification.CreatedDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
-                    <td>@notification.LineCount</td>
-                </tr>
-            }
+            <tr>
+                <td>@commit.Id</td>
+                <td>@commit.CommitMessage</td>
+                <td>@commit.User.Name</td>
+                <td><a href="@commit.CommitUrl" target="_blank">View Commit</a></td>
+                <td>@commit.CreateDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@commit.LineChange</td>
+            </tr>
         }
     </tbody>
 </table>
 
-<!-- Thêm phân trang -->
+<!-- Pagination nếu cần -->
 <div class="pagination">
     <button @onclick="PreviousPage" disabled="@(_currentPage == 1)">Previous</button>
     <span>Page @_currentPage of @totalPages</span>
     <button @onclick="NextPage" disabled="@(_currentPage == totalPages)">Next</button>
 </div>
 
-<div>
-    <h4>Received Notifications:</h4>
-    <pre>@JsonSerializer.Serialize(notifications, new JsonSerializerOptions { WriteIndented = true })</pre>
-</div>
-
-
-
-
 @code {
-    private IEnumerable<CommitNotification> notifications;
+    private List<CommitDetail> commits = new();
     private int _currentPage = 1;
-    private int pageSize = 3;
+    private int pageSize = 5;
     private int totalPages;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadNotifications();
+        await LoadCommits();
+        
+        // Kết nối SignalR
+        connection = new HubConnectionBuilder()
+        .WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub"), options =>
+        {
+            options.HttpMessageHandlerFactory = _ => new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            };
+        })
+        .Build();
+
+        connection.On("RefreshCommits", async () =>
+        {
+            await LoadCommits(); // Làm mới dữ liệu từ database
+        });
+
+        await connection.StartAsync();
     }
 
-    private async Task LoadNotifications()
+    private async Task LoadCommits()
     {
-        var totalNotifications = NotificationService.GetNotifications(0, int.MaxValue).Count();
-        totalPages = (int)Math.Ceiling(totalNotifications / (double)pageSize);
-
-        // Lấy thông báo cho trang hiện tại
-        notifications = NotificationService.GetNotifications(_currentPage, pageSize);
-        await InvokeAsync(StateHasChanged);
+        // Lấy dữ liệu từ database
+        var allCommits = await CommitDetailServices.GetPagedCommits(_currentPage, pageSize);
+        commits = allCommits.Commits;
+        totalPages = (int)Math.Ceiling((double)allCommits.TotalCount / pageSize);
+        StateHasChanged();
     }
 
     private async Task NextPage()
@@ -79,7 +83,7 @@
         if (_currentPage < totalPages)
         {
             _currentPage++;
-            await LoadNotifications();
+            await LoadCommits();
         }
     }
 
@@ -88,33 +92,9 @@
         if (_currentPage > 1)
         {
             _currentPage--;
-            await LoadNotifications();
+            await LoadCommits();
         }
     }
 
-    // Kết nối SignalR
-    private HubConnection? connection;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            connection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub"), options =>
-            {
-                options.HttpMessageHandlerFactory = _ => new HttpClientHandler
-                    {
-                        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-                    };
-            })
-            .Build();
-
-            connection.On<CommitNotification>("ReceiveNotification", async notification =>
-            {
-                await LoadNotifications();
-            });
-
-            await connection.StartAsync();
-        }
-    }
+    private HubConnection connection;
 }

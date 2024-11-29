@@ -1,6 +1,4 @@
-﻿using CommitPushNoti.Infrastructures.Models;
-
-namespace CommitPushNoti.Data
+﻿namespace CommitPushNoti.Data
 {
     public class CommitNotification
     {
@@ -11,6 +9,7 @@ namespace CommitPushNoti.Data
         public string             PublisherId        { get; set; }
         public Resource           Resource           { get; set; }
         public string             ResourceVersion    { get; set; }
+        public ResourceContainers ResourceContainers { get; set; }
         public DateTime           CreatedDate        { get; set; }
         public int                LineCount          { get; set; }
 
@@ -77,13 +76,21 @@ namespace CommitPushNoti.Data
 
     public class Commit
     {
-        public string CommitId { get; set; }
-        public Author Author   { get; set; }
-        public string Comment  { get; set; }
-        public string Url      { get; set; }
+        public string    CommitId  { get; set; }
+        public Author    Author    { get; set; }
+        public Committer Committer { get; set; }
+        public string    Comment   { get; set; }
+        public string    Url       { get; set; }
     }
 
     public class Author
+    {
+        public string   Name  { get; set; }
+        public string   Email { get; set; }
+        public DateTime Date  { get; set; }
+    }
+
+    public class Committer
     {
         public string   Name  { get; set; }
         public string   Email { get; set; }
@@ -96,5 +103,9 @@ namespace CommitPushNoti.Data
     //    public string Name { get; set; }
     //    public string Url  { get; set; }
     //}
-
+    public class ResourceContainers
+    {
+        public Collection Collection { get; set; }
+        public Project    Project { get; set; }
+    }
 }

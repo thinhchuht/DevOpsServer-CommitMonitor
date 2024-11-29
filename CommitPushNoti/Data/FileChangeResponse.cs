@@ -17,6 +17,7 @@
 
     public class FileDiffDataProvider
     {
+        [JsonPropertyName("blocks")]
         public List<Block> Blocks { get; set; }
     }
 

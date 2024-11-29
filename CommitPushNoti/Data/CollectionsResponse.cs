@@ -1,6 +1,4 @@
-﻿using CommitPushNoti.Infrastructures.Models;
-
-namespace CommitPushNoti.Data
+﻿namespace CommitPushNoti.Data
 {
     public class CollectionsResponse
     {

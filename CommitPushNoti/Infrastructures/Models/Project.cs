@@ -2,6 +2,19 @@
 {
     public class Project
     {
+        public Project(string id, string name, string description, string url, string state, int revision, string visibility, DateTime lastUpdateTime, string collectionId)
+        {
+            Id             = id;
+            Name           = name;
+            Description    = description;
+            Url            = url;
+            State          = state;
+            Revision       = revision;
+            Visibility     = visibility;
+            LastUpdateTime = lastUpdateTime;
+            CollectionId   = collectionId;
+        }
+
         [JsonPropertyName("id")]
         public string Id { get; set; }
         [JsonPropertyName("name")]
@@ -20,6 +33,7 @@
         public DateTime LastUpdateTime { get; set; }
         public string CollectionId { get; set; }
         public Collection Collection { get; set; }
+        public List<UserProject> UserProjects { get; set; }
         public List<Repository> Repositories { get; set; }
     }
 }

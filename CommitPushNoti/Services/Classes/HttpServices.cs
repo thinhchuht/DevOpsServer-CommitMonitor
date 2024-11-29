@@ -1,4 +1,4 @@
-﻿namespace CommitPushNoti.Services
+﻿namespace CommitPushNoti.Services.Classes
 {
     public class HttpServices : IHttpServices
     {
@@ -50,7 +50,7 @@
                 var response = await client.GetAsync(relativeUri);
                 response.EnsureSuccessStatusCode();
                 var json = await response.Content.ReadAsStringAsync();
-                
+
                 //Nếu đếm số dòng
                 if (countLines)
                 {
@@ -63,7 +63,7 @@
             }
 
             //Trường hợp file json trả exception ( thêm hoặc xóa file) thì trả về  -1 để xử lý tiếp
-            catch 
+            catch
             {
                 return (T)Convert.ChangeType(-1, typeof(T));
             }
@@ -161,16 +161,16 @@
                 return totalModifiedLines;
             }
 
-           
+
             //trường hợp ra exception ( add hoặc thêm file)
             var commitFileChangeUri = $"{collectionName}/_apis/git/repositories/{repoId}/items?path={path}&api-version=6.0";
             var lineCount = await GetAsync<int>(commitFileChangeUri, pat, true);
 
             //nếu là case là delete file
-            if (lineCount == -1) 
+            if (lineCount == -1)
             {
                 //lấy ra parentCommit của commit trước
-                var parentCommitUri  = $"{collectionName}/{projectName}/_apis/git/repositories/{repoId}/commits/{parentCommitId}?api-version=6.0";
+                var parentCommitUri = $"{collectionName}/{projectName}/_apis/git/repositories/{repoId}/commits/{parentCommitId}?api-version=6.0";
                 parentCommitId = await GetParentCommitId(parentCommitUri, pat);
 
                 //gọi lại api đến dòng cho file đã bị xóa với commitId của commit tồn tại file

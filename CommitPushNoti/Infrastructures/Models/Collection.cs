@@ -2,15 +2,21 @@
 {
     public class Collection
     {
+        public Collection(string id, string name, string url)
+        {
+            Id   = id;
+            Name = name;
+            Url  = url;
+        }
+
         [JsonPropertyName("id")]
         public string Id { get; set; }
 
         [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("url")]
+        [JsonPropertyName("baseUrl")]
         public string Url { get; set; }
         public List<Project> Projects { get; set; }
-        public List<UserCollection> UserCollection { get; set; }
     }
 }

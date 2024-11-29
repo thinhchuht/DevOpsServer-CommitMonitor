@@ -1,13 +1,5 @@
-﻿using CommitPushNoti.Infrastructures.Models;
-
-public class WebhookService : IWebhookService
+﻿public class WebhookService(IHttpServices httpServices) : IWebhookService
 {
-    private readonly IHttpServices _httpServices;
-
-    public WebhookService(IHttpServices httpServices)
-    {
-        _httpServices = httpServices;
-    }
 
     /// <summary>
     /// Tạo webhook cho projects
@@ -22,11 +14,11 @@ public class WebhookService : IWebhookService
         {
             if (string.IsNullOrEmpty(collectionName) && string.IsNullOrEmpty(projectName))
             {
-                var collections = await _httpServices.GetAsync<CollectionsResponse>(Constants.CollectionsUri, pat);
+                var collections = await httpServices.GetAsync<CollectionsResponse>(Constants.CollectionsUri, pat);
                 foreach (var collectionsItem in collections.Value)
                 {
                     var projectUri = $"{collectionsItem.Name}/_apis/projects?";
-                    var projects = await _httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
+                    var projects = await httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
                     foreach (var projectItem in projects.Value)
                     {
                         var subcriptionUri = $"{collectionsItem.Name}/_apis/hooks/subscriptions?api-version=6.0";
@@ -41,7 +33,7 @@ public class WebhookService : IWebhookService
 
                 if (string.IsNullOrEmpty(projectName))
                 {
-                    var projects = await _httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
+                    var projects = await httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
                     foreach (var projectItem in projects.Value)
                     {
                         var response = await HandlePostSubcription(subcriptionUri, webhookUrl, pat, projectItem);
@@ -49,9 +41,9 @@ public class WebhookService : IWebhookService
                 } 
                 else
                 {
-                    var projectCounts = await _httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
+                    var projectCounts = await httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
                     var projects = projectCounts.Value.FirstOrDefault(x => x.Name.Equals(projectName));
-                    var projectItem = (await _httpServices.GetAsync<ProjectsResponse>(projectUri, pat)).Value.FirstOrDefault(x => x.Name.Equals(projectName));
+                    var projectItem = (await httpServices.GetAsync<ProjectsResponse>(projectUri, pat)).Value.FirstOrDefault(x => x.Name.Equals(projectName));
                     var response = await HandlePostSubcription(subcriptionUri, webhookUrl, pat, projectItem);
                 }
             }
@@ -83,6 +75,6 @@ public class WebhookService : IWebhookService
             },
             status = "enabled"
         };
-       return await _httpServices.SetUpProjectWebHookAsync(subcriptionUri, payload, pat);
+       return await httpServices.SetUpProjectWebHookAsync(subcriptionUri, payload, pat);
     }
 }

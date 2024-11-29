@@ -1,39 +1,35 @@
-﻿using CommitPushNoti.Infrastructures.Models;
-using Microsoft.EntityFrameworkCore;
-
-namespace CommitPushNoti.Infrastructures
+﻿namespace CommitPushNoti.Infrastructures
 {
-    public class DevopsContext : DbContext
+    public class DevopsContext(DbContextOptions options) : DbContext(options)
     {
-        public DevopsContext(DbContextOptions options) : base(options)
-        {
-        }
         public DbSet<User> Users { get; set; }
         public DbSet<Collection> Collections { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<Repository> Repositories { get; set; }
         public DbSet<CommitDetail> CommitDetail { get; set; }
-        public DbSet<UserCollection> UserCollection { get; set; }
+        public DbSet<UserProject> UserProject { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<User>().HasKey(u => u.Email);
+
             // User - CommitDetails (One-to-Many)
             modelBuilder.Entity<User>()
                 .HasMany(u => u.CommitDetails)
                 .WithOne(cd => cd.User)
-                .HasForeignKey(cd => cd.UserId);
+                .HasForeignKey(cd => cd.UserEmail);
 
-            // User - UserCollections (One-to-Many)
+            // User - UserProjects (One-to-Many)
             modelBuilder.Entity<User>()
-                .HasMany(u => u.UserCollection)
+                .HasMany(u => u.UserProject)
                 .WithOne(uc => uc.User)
-                .HasForeignKey(uc => uc.UserId);
+                .HasForeignKey(uc => uc.UserEmail);
 
-            // UserCollection - Collection (Many-to-One)
-            modelBuilder.Entity<UserCollection>()
-                .HasOne(uc => uc.Collection)
-                .WithMany(c => c.UserCollection)
-                .HasForeignKey(uc => uc.CollectionId);
+            // UserProject - Project (Many-to-One)
+            modelBuilder.Entity<UserProject>()
+                .HasOne(p => p.Project)
+                .WithMany(c => c.UserProjects)
+                .HasForeignKey(uc => uc.ProjectId);
 
             // Collection - Projects (One-to-Many)
             modelBuilder.Entity<Collection>()
@@ -53,9 +49,9 @@ namespace CommitPushNoti.Infrastructures
                 .WithOne(cd => cd.Repository)
                 .HasForeignKey(cd => cd.RepositoryId);
 
-            // UserCollection - Composite Key
-            modelBuilder.Entity<UserCollection>()
-                .HasKey(uc => new { uc.UserId, uc.CollectionId });
+            // UserProject - Composite Key
+            modelBuilder.Entity<UserProject>()
+                .HasKey(up => new { up.UserEmail, up.ProjectId });
         }
     }
 }

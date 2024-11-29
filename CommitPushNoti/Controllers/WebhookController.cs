@@ -2,16 +2,13 @@
 {
     [ApiController]
     [Route("api")]
-    public class WebhookController : ControllerBase
+    public class WebhookController(INotificationService notificationService,
+        IWebhookService webhookService,
+        ICollectionService collectionService,
+        IProjectService projectService,
+        IRepositoryService repositoryService,
+        ICommitDetailServices commitDetailServices) : ControllerBase
     {
-        private readonly INotificationService _notificationService;
-        private readonly IWebhookService _webhookService;
-        public WebhookController(INotificationService notificationService, IWebhookService webhookService)
-        {
-            _notificationService = notificationService;
-            _webhookService = webhookService;
-        }
-
         private static string? _storedPAT;
 
         /// <summary>
@@ -45,9 +42,19 @@
                 {
                     return BadRequest("Invalid notification payload.");
                 }
-                var lineCount = await _notificationService.GetLineCount(notification, _storedPAT);
+                var lineCount = await notificationService.GetLineCount(notification, _storedPAT);
                 notification.LineCount = lineCount;
-                await _notificationService.AddNotificationAsync(notification);
+
+                await collectionService.AddCollection(notification.ResourceContainers.Collection.Id, notification.CollectionName, notification.ResourceContainers.Collection.Url);
+
+                await projectService.AddProject(notification.Resource.Repository.Project, notification.ResourceContainers.Collection.Id);
+
+                await repositoryService.AddRepository(notification.Resource.Repository, notification.ResourceContainers.Project.Id);
+
+                var commit = notification.Resource.Commits.FirstOrDefault();
+                await commitDetailServices.AddCommitDetail(commit.CommitId, commit.Comment, notification.CreatedDate, notification.CommitUrl, lineCount, commit.Committer.Email, notification.Resource.Repository.Id);
+                var allCommits = await commitDetailServices.GetAllCommitDetails();
+                await notificationService.TriggerNotificationAsync();
                 return Ok(new { message = "Notification received successfully." });
             }
             catch (Exception ex) 
@@ -66,7 +73,7 @@
         [HttpGet("notifications")]
         public IActionResult GetNotifications(int page = 1, int pageSize = 3)
         {
-            var notifications = _notificationService.GetNotifications(page, pageSize);
+            var notifications = notificationService.GetNotifications(page, pageSize);
             return Ok(notifications);
         }
 
@@ -80,7 +87,7 @@
         [HttpPost("setup")]
         public async Task<IActionResult> SetupWebhook([FromBody] WebhookSetupRequest request)
         {
-            var result = await _webhookService.SetupWebhooksAsync(request.WebhookUrl, request.PAT, request.CollectionName, request.ProjectName);
+            var result = await webhookService.SetupWebhooksAsync(request.WebhookUrl, request.PAT, request.CollectionName, request.ProjectName);
 
             if (!result)
             {

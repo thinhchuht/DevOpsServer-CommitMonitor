@@ -1,4 +1,4 @@
-﻿namespace CommitPushNoti.Services
+﻿namespace CommitPushNoti.Services.Interfaces
 {
     public interface IHttpServices
     {

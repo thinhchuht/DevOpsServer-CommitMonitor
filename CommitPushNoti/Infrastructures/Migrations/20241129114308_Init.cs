@@ -28,13 +28,12 @@ namespace CommitPushNoti.Infrastructures.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Users", x => x.Id);
+                    table.PrimaryKey("PK_Users", x => x.Email);
                 });
 
             migrationBuilder.CreateTable(
@@ -62,31 +61,6 @@ namespace CommitPushNoti.Infrastructures.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserCollection",
-                columns: table => new
-                {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CollectionId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserCollection", x => new { x.UserId, x.CollectionId });
-                    table.ForeignKey(
-                        name: "FK_UserCollection_Collections_CollectionId",
-                        column: x => x.CollectionId,
-                        principalTable: "Collections",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UserCollection_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Repositories",
                 columns: table => new
                 {
@@ -107,17 +81,40 @@ namespace CommitPushNoti.Infrastructures.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserProject",
+                columns: table => new
+                {
+                    UserEmail = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProjectId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserProject", x => new { x.UserEmail, x.ProjectId });
+                    table.ForeignKey(
+                        name: "FK_UserProject_Projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "Projects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserProject_Users_UserEmail",
+                        column: x => x.UserEmail,
+                        principalTable: "Users",
+                        principalColumn: "Email",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CommitDetail",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Collection = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Project = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CommitMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreateDate = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CommitUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     LineChange = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    UserEmail = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     RepositoryId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
@@ -129,10 +126,10 @@ namespace CommitPushNoti.Infrastructures.Migrations
                         principalTable: "Repositories",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_CommitDetail_Users_UserId",
-                        column: x => x.UserId,
+                        name: "FK_CommitDetail_Users_UserEmail",
+                        column: x => x.UserEmail,
                         principalTable: "Users",
-                        principalColumn: "Id");
+                        principalColumn: "Email");
                 });
 
             migrationBuilder.CreateIndex(
@@ -141,9 +138,9 @@ namespace CommitPushNoti.Infrastructures.Migrations
                 column: "RepositoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CommitDetail_UserId",
+                name: "IX_CommitDetail_UserEmail",
                 table: "CommitDetail",
-                column: "UserId");
+                column: "UserEmail");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Projects_CollectionId",
@@ -156,9 +153,9 @@ namespace CommitPushNoti.Infrastructures.Migrations
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserCollection_CollectionId",
-                table: "UserCollection",
-                column: "CollectionId");
+                name: "IX_UserProject_ProjectId",
+                table: "UserProject",
+                column: "ProjectId");
         }
 
         /// <inheritdoc />
@@ -168,7 +165,7 @@ namespace CommitPushNoti.Infrastructures.Migrations
                 name: "CommitDetail");
 
             migrationBuilder.DropTable(
-                name: "UserCollection");
+                name: "UserProject");
 
             migrationBuilder.DropTable(
                 name: "Repositories");
