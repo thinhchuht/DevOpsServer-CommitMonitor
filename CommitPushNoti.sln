@@ -3,9 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommitPushNoti", "CommitPushNoti\CommitPushNoti.csproj", "{9368BEC3-D195-421B-9455-3131999C6B6D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{2EB2CBBD-A0EE-484D-BB27-11047D120029}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommitPushNoti", "CommitPushNoti\CommitPushNoti.csproj", "{9368BEC3-D195-421B-9455-3131999C6B6D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +15,6 @@ Global
 		{9368BEC3-D195-421B-9455-3131999C6B6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9368BEC3-D195-421B-9455-3131999C6B6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9368BEC3-D195-421B-9455-3131999C6B6D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2EB2CBBD-A0EE-484D-BB27-11047D120029}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2EB2CBBD-A0EE-484D-BB27-11047D120029}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2EB2CBBD-A0EE-484D-BB27-11047D120029}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2EB2CBBD-A0EE-484D-BB27-11047D120029}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,21 +1,15 @@
 ﻿@inherits LayoutComponentBase
 
-<PageTitle>Blazor Notification</PageTitle>
-
-<div class="main">
-    <NavMenu />
-    <div class="content px-4">
+<div class="container">
+    <header>
+        <h1 class="text-center">Commit Push Notifications</h1>
+    </header>
+    <nav>
+        <a href="/">Home</a> | 
+        <a href="/notifications">Notifications</a>|
+        <a href="/pat-setup">Change PAT</a> |
+    </nav>
+    <main>
         @Body
-    </div>
+    </main>
 </div>
-
-<style>
-    .main {
-        display: flex;
-        flex-direction: row;
-    }
-
-    .content {
-        flex: 1;
-    }
-</style>

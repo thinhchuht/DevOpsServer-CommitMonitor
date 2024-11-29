@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
-
-namespace CommitPushNoti.Hubs
+﻿namespace CommitPushNoti.Hubs
 {
     public class NotificationHub : Hub
     {
