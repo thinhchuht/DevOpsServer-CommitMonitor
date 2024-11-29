@@ -1,4 +1,6 @@
-﻿public class WebhookService : IWebhookService
+﻿using CommitPushNoti.Infrastructures.Models;
+
+public class WebhookService : IWebhookService
 {
     private readonly IHttpServices _httpServices;
 
@@ -20,7 +22,7 @@
         {
             if (string.IsNullOrEmpty(collectionName) && string.IsNullOrEmpty(projectName))
             {
-                var collections = await _httpServices.GetAsync<ProjectCollectionsResponse>(Constants.CollectionsUri, pat);
+                var collections = await _httpServices.GetAsync<CollectionsResponse>(Constants.CollectionsUri, pat);
                 foreach (var collectionsItem in collections.Value)
                 {
                     var projectUri = $"{collectionsItem.Name}/_apis/projects?";
@@ -62,7 +64,7 @@
         }
     }
 
-    private async Task<HttpResponseMessage> HandlePostSubcription(string subcriptionUri, string webhookUrl, string pat, Projects projectItem)
+    private async Task<HttpResponseMessage> HandlePostSubcription(string subcriptionUri, string webhookUrl, string pat, Project projectItem)
     {
         var payload = new
         {

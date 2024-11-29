@@ -6,5 +6,6 @@
         Task AddNotificationAsync(CommitNotification notification);
         List<CommitNotification> GetNotificationsPaged(int page, int pageSize);
         int GetTotalNotificationsCount();
+        Task<int> GetLineCount(CommitNotification notification, string pat);
     }
 }

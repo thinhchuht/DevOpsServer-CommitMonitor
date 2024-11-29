@@ -7,7 +7,7 @@ builder.Services.AddSingleton<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IWebhookService,WebhookService>();
 builder.Services.AddSingleton<IHttpServices, HttpServices>();
 builder.Services.AddHttpClient();
-
+builder.Services.AddDbContext<DevopsContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("DevopsDb")));
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {

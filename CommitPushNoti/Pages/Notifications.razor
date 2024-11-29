@@ -15,20 +15,25 @@
             <th>Commit Message</th>
             <th>Commit URL</th>
             <th>Created Date</th>
+            <th>Line Change</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var notification in notifications)
         {
-            <tr>
-                <td>@notification.CollectionName</td>
-                <td>@notification.Resource.Repository.Project.Name</td>
-                <td>@notification.Resource.Repository.Name</td>
-                <td>@notification.Resource.Commits.FirstOrDefault()?.Author.Name</td>
-                <td>@notification.Resource.Commits.FirstOrDefault()?.Comment</td>
-                <td><a href="@notification.CommitUrl" target="_blank">View Commit</a></td>
-                <td>@notification.CreatedDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
-            </tr>
+            if (!(notification.Resource.Commits == null))
+            {
+                <tr>
+                    <td>@notification.CollectionName</td>
+                    <td>@notification.Resource.Repository.Project.Name</td>
+                    <td>@notification.Resource.Repository.Name</td>
+                    <td>@notification.Resource.Commits.FirstOrDefault()?.Author.Name</td>
+                    <td>@notification.Resource.Commits.FirstOrDefault()?.Comment</td>
+                    <td><a href="@notification.CommitUrl" target="_blank">View Commit</a></td>
+                    <td>@notification.CreatedDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td>@notification.LineCount</td>
+                </tr>
+            }
         }
     </tbody>
 </table>
@@ -44,6 +49,9 @@
     <h4>Received Notifications:</h4>
     <pre>@JsonSerializer.Serialize(notifications, new JsonSerializerOptions { WriteIndented = true })</pre>
 </div>
+
+
+
 
 @code {
     private IEnumerable<CommitNotification> notifications;
@@ -95,9 +103,9 @@
             .WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub"), options =>
             {
                 options.HttpMessageHandlerFactory = _ => new HttpClientHandler
-                {
-                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-                };
+                    {
+                        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+                    };
             })
             .Build();
 

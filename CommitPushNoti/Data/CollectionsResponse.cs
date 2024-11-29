@@ -2,12 +2,12 @@
 
 namespace CommitPushNoti.Data
 {
-    public class ProjectsResponse
+    public class CollectionsResponse
     {
         [JsonPropertyName("count")]
         public int Count { get; set; }
 
         [JsonPropertyName("value")]
-        public List<Project> Value { get; set; }
+        public List<Collection> Value { get; set; }
     }
 }

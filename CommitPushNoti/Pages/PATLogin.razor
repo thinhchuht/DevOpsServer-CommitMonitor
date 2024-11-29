@@ -1,0 +1,49 @@
+﻿@page "/pat-setup"
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
+
+<h3>Setup Personal Access Token</h3>
+
+<div>
+    <label for="pat">Enter your Personal Access Token (PAT):</label>
+    <input id="pat" @bind="pat" type="password" class="form-control" placeholder="Enter PAT here" />
+    <button class="btn btn-primary mt-2" @onclick="SavePAT">Save PAT</button>
+</div>
+
+@if (Message != null)
+{
+    <p class="alert alert-info">@Message</p>
+}
+
+@code {
+    private string? pat;
+    private string? Message;
+
+    private async Task SavePAT()
+    {
+        if (string.IsNullOrWhiteSpace(pat))
+        {
+            Message = "PAT cannot be empty.";
+            return;
+        }
+
+        // Gọi API lưu PAT vào backend
+        var client = HttpClientFactory.CreateClient();
+        client.BaseAddress = new Uri(Configuration["Urls:HostUrl"]);
+        var response = await client.PostAsJsonAsync("api/save", pat);
+        if (response.IsSuccessStatusCode)
+        {
+        //     //Lưu thêm vào localStorage (optional)
+        //     await JSRuntime.InvokeVoidAsync("localStorage.setItem", "PAT", pat);
+            Message = "PAT saved successfully!";
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Message = $"Error: {error}";
+        }
+    }
+}
+
