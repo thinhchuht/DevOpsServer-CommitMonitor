@@ -11,7 +11,7 @@
             services.AddDbContext<DevopsContext>(o => o.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("DevopsDb")), ServiceLifetime.Transient);
             services.AddSignalR();
             services.AddLifeTime();
-            services.AddHttpClient();
+            services.AddHttpClient("CustomClient").AddHttpMessageHandler<CustomHttpMessageHandler>();
         }
 
         private static IServiceCollection AddLifeTime(this IServiceCollection services)
@@ -19,6 +19,7 @@
             services.AddScoped<INotificationService, NotificationService>()
                 .AddScoped<IWebhookService, WebhookService>()
                 .AddScoped<IHttpServices, HttpServices>()
+                .AddTransient<CustomHttpMessageHandler>()
                 .AddScoped<ICollectionService, CollectionService>()
                 .AddScoped<IProjectService, ProjectService>()
                 .AddScoped<IRepositoryService, RepositoryService>()
@@ -26,7 +27,8 @@
                 .AddScoped<IUserService, UserService>()
                 .AddScoped<IUserProjectService, UserProjectService>()
                 .AddScoped<IPullRequestService, PullRequestService>()
-                .AddScoped<IBaseDbServices, BaseDbServices>();
+                .AddScoped<IBaseDbServices, BaseDbServices>()
+                .AddScoped<IUserDbService, UserDbService>();
             return services;
         }
     }

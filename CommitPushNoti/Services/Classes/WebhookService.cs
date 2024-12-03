@@ -9,7 +9,7 @@ public class WebhookService(IHttpServices httpServices) : IWebhookService
     /// <param name="webhookUrl">url để devops gọi để gửi thông báo về</param>
     /// <param name="pat"></param>
     /// <returns></returns>
-    public async Task<bool> SetupWebhooksAsync(string webhookUrl, string eventType, string pat, string collectionName = "", string projectName = "")
+    public async Task<ResponseModel> SetupWebhooksAsync(string webhookUrl, string eventType, string pat, string collectionName = "", string projectName = "", bool isSetup = true)
     {
         try
         {
@@ -23,37 +23,50 @@ public class WebhookService(IHttpServices httpServices) : IWebhookService
                     foreach (var projectItem in projects.Value)
                     {
                         var subcriptionUri = $"{collectionsItem.Name}/_apis/hooks/subscriptions?api-version=6.0";
-                        var response = await HandlePostSubcription(subcriptionUri,webhookUrl,eventType, pat, projectItem);
+                        if (isSetup) await HandlePostSubcription(subcriptionUri, webhookUrl, eventType, pat, projectItem);
+                        else await HandleDeleteSubcription(collectionsItem.Name, pat);
                     }
                 }
             }
             else if (!string.IsNullOrEmpty(collectionName))
             {
+
                 var projectUri = $"{collectionName}/_apis/projects?";
                 var subcriptionUri = $"{collectionName}/_apis/hooks/subscriptions?api-version=6.0";
 
                 if (string.IsNullOrEmpty(projectName))
                 {
-                    var projects = await httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
-                    foreach (var projectItem in projects.Value)
+                    if (isSetup)
                     {
-                        var response = await HandlePostSubcription(subcriptionUri, webhookUrl,eventType, pat, projectItem);
+                        var projects = await httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
+                        foreach (var projectItem in projects.Value)
+                        {
+                            var response = await HandlePostSubcription(subcriptionUri, webhookUrl, eventType, pat, projectItem);
+                        }
                     }
-                } 
+                    else await HandleDeleteSubcription(collectionName, pat);
+
+                }
                 else
                 {
-                    var projectCounts = await httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
-                    var projects = projectCounts.Value.FirstOrDefault(x => x.Name.Equals(projectName));
-                    var projectItem = (await httpServices.GetAsync<ProjectsResponse>(projectUri, pat)).Value.FirstOrDefault(x => x.Name.Equals(projectName));
-                    var response = await HandlePostSubcription(subcriptionUri, webhookUrl,eventType, pat, projectItem);
+                    if (isSetup)
+                    {
+                        var projectCounts = await httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
+                        var projects = projectCounts.Value.FirstOrDefault(x => x.Name.Equals(projectName));
+                        var projectItem = (await httpServices.GetAsync<ProjectsResponse>(projectUri, pat)).Value.FirstOrDefault(x => x.Name.Equals(projectName));
+                        var response = await HandlePostSubcription(subcriptionUri, webhookUrl, eventType, pat, projectItem);
+                    }
+                    else await HandleDeleteSubcription(collectionName, pat, projectName);
+
                 }
             }
-            return true;
+            else return ResponseModel.GetFailureResponse("You have to set collection name if the project name is not empty");
+ 
+            return ResponseModel.GetSuccessResponse("Setup hook successed");
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
-            return false;
+            return ResponseModel.GetFailureResponse(ex.ToString());
         }
     }
 
@@ -77,5 +90,36 @@ public class WebhookService(IHttpServices httpServices) : IWebhookService
             status = "enabled"
         };
        return await httpServices.SetUpProjectWebHookAsync(subcriptionUri, payload, pat);
+    }
+    private async Task<ResponseModel> HandleDeleteSubcription(string collectionName, string pat, string projectName = "")
+    {
+        try
+        {
+            string subcriptionUri;
+            var getAllSubscriptionsUri = $"{collectionName}/_apis/hooks/subscriptions?api-version=6.0";
+            var allSubcriptions = await httpServices.GetAsync<SubscriptionResponse>(getAllSubscriptionsUri, pat);
+            if (string.IsNullOrEmpty(projectName))
+            {
+                foreach (var subscription in allSubcriptions.Value)
+                {
+                    subcriptionUri = $"{collectionName}/_apis/hooks/subscriptions/{subscription.Id}?api-version=6.0";
+                    await httpServices.DeleteProjectWebHookAsync(subcriptionUri, pat);
+                }
+                return ResponseModel.GetSuccessResponse("Successed");
+            }
+            var projects = await httpServices.GetAsync<ProjectsResponse>($"{collectionName}/_apis/projects?", pat);
+            var project = projects.Value.Where(project => project.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+            var subcriptions =  allSubcriptions.Value.Where(s => s.PublisherInputs.ProjectId.Equals(project.Id));
+            foreach(var subcription in subcriptions)
+            {
+                subcriptionUri = $"{collectionName}/_apis/hooks/subscriptions/{subcription.Id}?api-version=6.0";
+                await httpServices.DeleteProjectWebHookAsync(subcriptionUri, pat);
+            }
+            return ResponseModel.GetSuccessResponse("Successed");
+        }
+        catch (Exception ex) 
+        {
+            return ResponseModel.GetFailureResponse(ex.ToString());
+        }
     }
 }

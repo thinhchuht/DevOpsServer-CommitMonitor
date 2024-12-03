@@ -39,6 +39,7 @@
 
         <button type="submit" class="btn btn-primary">Submit</button>
     </EditForm>
+    <button @onclick="DeleteWebhook" class="btn btn-danger mt-3">Delete Webhook</button>
 </div>
 
 @if (Message != null)
@@ -60,6 +61,29 @@
             if (response.IsSuccessStatusCode)
             {
                 Message = "Webhook setup successfully!";
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Message = $"Error: {error}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = $"Exception: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteWebhook()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            client.BaseAddress = new Uri(Configuration["Urls:HostUrl"]);
+            var response = await client.PostAsJsonAsync("api/delete", WebhookRequest);
+            if (response.IsSuccessStatusCode)
+            {
+                Message = "Webhook deleted successfully!";
             }
             else
             {

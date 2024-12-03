@@ -58,11 +58,12 @@
                 await repositoryService.AddRepository(notification.Resource.Repository, notification.ResourceContainers.Project.Id);
                 foreach(var commit in notification.Resource.Commits)
                 {
+                    var email = commit.Committer.Email ?? $"{commit.Committer.Name}@fpts.com.vn";
                     var lineCount = await notificationService.GetLineCount(notification, commit.CommitId, _storedPAT);
                     var commitUrl = $"{projectPart}/{projectName}/_git/{repoName}/commit/{commit.CommitId}";
-                    await userService.AddUser(new User(commit.Committer.Email, commit.Committer.Name));
-                    await userProjectService.AddUserProject(new UserProject(commit.Committer.Email, notification.ResourceContainers.Project.Id));
-                    await commitDetailServices.AddCommitDetail(commit.CommitId, commit.Comment, notification.CreatedDate, commitUrl, lineCount, commit.Committer.Email, notification.Resource.Repository.Id);
+                    await userService.AddUser(new User(email, commit.Committer.Name));
+                    await userProjectService.AddUserProject(new UserProject(email, notification.ResourceContainers.Project.Id));
+                    await commitDetailServices.AddCommitDetail(commit.CommitId, commit.Comment, notification.CreatedDate, commitUrl, lineCount, email, notification.Resource.Repository.Id);
                 }
                 
                 await notificationService.TriggerNotificationAsync();
@@ -134,11 +135,17 @@
         {
             var result = await webhookService.SetupWebhooksAsync(request.WebhookUrl, request.EventType, request.PAT, request.CollectionName, request.ProjectName);
 
-            if (!result)
-            {
-                return StatusCode(500, "Failed to setup webhooks.");
-            }
-            return Ok(new { message = "Webhooks setup successfully." });
+            if (!result.IsSuccess()) return StatusCode(500, result.Message);
+            return Ok(new { message = result.Message });
+        }
+
+        [HttpPost("delete")]
+        public async Task<IActionResult> DeleteWebhook([FromBody] WebhookSetupRequest request)
+        {
+            var result = await webhookService.SetupWebhooksAsync(request.WebhookUrl, request.EventType, request.PAT, request.CollectionName, request.ProjectName, false);
+
+            if (!result.IsSuccess()) return StatusCode(500, result.Message);
+            return Ok(new { message = result.Message });
         }
     }
 }

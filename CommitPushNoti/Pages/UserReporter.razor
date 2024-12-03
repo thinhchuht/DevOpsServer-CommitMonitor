@@ -89,13 +89,40 @@ else
     private int currentUserPage = 1; 
     private int totalUserPages; 
     private List<User> pagedUsers = new List<User>(); 
-
+    private HubConnection connection;
     private DateTime FromDate { get; set; } = DateTime.Now.AddMonths(-1); 
     private DateTime ToDate { get; set; } = DateTime.Now;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadUsersAndReports();
+
+        // Kết nối SignalR
+        connection = new HubConnectionBuilder()
+        .WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub"), options =>
+        {
+            options.HttpMessageHandlerFactory = _ => new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+                };
+        })
+        .Build();
+
+        connection.On("Refresh", async () =>
+       {
+           if (connection.State == HubConnectionState.Connected)
+           {
+               await LoadUsersAndReports();
+
+           }
+           else
+           {
+               Console.WriteLine("SignalR connection not connected.");
+           }
+       });
+
+        await connection.StartAsync();
+
     }
 
     private async Task LoadUsersAndReports()
