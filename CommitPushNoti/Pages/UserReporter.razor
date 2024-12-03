@@ -17,7 +17,6 @@
         </div>
     }
 
-    <!-- Pagination for user checkboxes -->
     <div class="pagination">
         <button @onclick="() => ChangeUserPage(currentUserPage - 1)" disabled="@((currentUserPage <= 1))">Previous</button>
         <span>Page @currentUserPage of @totalUserPages</span>
@@ -72,6 +71,10 @@
         <span>Page @currentPage of @totalPages</span>
         <button @onclick="() => ChangePage(currentPage + 1)" disabled="@((currentPage >= totalPages))">Next</button>
     </div>
+    <div>
+        <label for="reportPageSize">Report Page Size: </label>
+        <input type="number" id="reportPageSize" min="1" value="@reportPageSize" @onchange="OnReportPageSizeChanged" />
+    </div>
 }
 else
 {
@@ -81,17 +84,16 @@ else
 @code {
     private List<User> users = new List<User>();
     public List<CommitPushNoti.Data.UserReporter> userReporters;
-    private HashSet<string> selectedEmails = new HashSet<string>(); // Store selected emails
-    private int currentPage = 1; // Page for reports
+    private HashSet<string> selectedEmails = new HashSet<string>(); 
+    private int currentPage = 1; 
     private int totalPages;
-    private int pageSize = 10; // Default page size for reports
+    private int pageSize = 10; 
+    private int reportPageSize = 10;
+    private int currentUserPage = 1; 
+    private int totalUserPages; 
+    private List<User> pagedUsers = new List<User>(); 
 
-    // New variables for user pagination
-    private int currentUserPage = 1; // Current page for users
-    private int totalUserPages; // Total number of pages for users
-    private List<User> pagedUsers = new List<User>(); // Users in the current page
-
-    private DateTime FromDate { get; set; } = DateTime.Now.AddMonths(-1); // Default to 1 month ago
+    private DateTime FromDate { get; set; } = DateTime.Now.AddMonths(-1); 
     private DateTime ToDate { get; set; } = DateTime.Now;
 
     protected override async Task OnInitializedAsync()
@@ -101,44 +103,49 @@ else
 
     private async Task LoadUsersAndReports()
     {
-        users = await UserService.GetAllUser(); // Get all users
-        selectedEmails = new HashSet<string>(users.Select(u => u.Email)); // Select all users by default
-        totalUserPages = (int)Math.Ceiling((double)users.Count / pageSize); // Calculate total pages for users
-        await LoadUserPage(); // Load the first page of users
-        await LoadReport(); // Load reports for selected users
+        users = await UserService.GetAllUser();
+        selectedEmails = new HashSet<string>(users.Select(u => u.Email)); 
+        totalUserPages = (int)Math.Ceiling((double)users.Count / pageSize); 
+        await LoadUserPage();
+        await LoadReport(); 
     }
 
     private async Task LoadUserPage()
     {
-        // Get users for the current page
         pagedUsers = users.Skip((currentUserPage - 1) * pageSize).Take(pageSize).ToList();
-        await InvokeAsync(StateHasChanged); // Update the UI with the paged users
+        await InvokeAsync(StateHasChanged); 
     }
 
     private async Task LoadReport()
     {
         var selectedEmailsList = selectedEmails.ToList();
         var userReports = await UserService.GetUserReport(selectedEmailsList, FromDate, ToDate);
-        totalPages = (int)Math.Ceiling((double)userReports.Count / pageSize); // Calculate total pages for reports
-        userReporters = userReports.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
-        await InvokeAsync(StateHasChanged); // Update the UI with the report data
+
+        totalPages = (int)Math.Ceiling((double)userReports.Count / reportPageSize);
+
+        userReporters = userReports
+            .Skip((currentPage - 1) * reportPageSize)
+            .Take(reportPageSize)
+            .ToList();
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task ChangeUserPage(int page)
     {
-        if (page >= 1 && page <= totalUserPages) // Check if the page is valid
+        if (page >= 1 && page <= totalUserPages) 
         {
             currentUserPage = page;
-            await LoadUserPage(); // Reload the users for the new page
+            await LoadUserPage(); 
         }
     }
 
     private async Task ChangePage(int page)
     {
-        if (page >= 1 && page <= totalPages) // Check if the page is valid
+        if (page >= 1 && page <= totalPages) 
         {
             currentPage = page;
-            await LoadReport(); // Reload the report for the new page
+            await LoadReport(); 
         }
     }
 
@@ -146,28 +153,52 @@ else
     {
         if ((bool)e.Value)
         {
-            selectedEmails.Add(email); // Add email to selected list
+            selectedEmails.Add(email); 
         }
         else
         {
-            selectedEmails.Remove(email); // Remove email from selected list
+            selectedEmails.Remove(email); 
         }
-        await LoadReport(); // Reload the report after user selection changes
+        await LoadReport();
     }
 
     private async Task OnDateFilterChanged()
     {
-        await LoadReport(); // Apply the date filter and reload the report
+        await LoadReport(); 
     }
 
-    private async Task OnPageSizeChanged()
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
     {
-        // Recalculate total pages based on the new pageSize
-        totalUserPages = (int)Math.Ceiling((double)users.Count / pageSize);
-        totalPages = (int)Math.Ceiling((double)userReporters.Count / pageSize);
+        if (int.TryParse(e.Value.ToString(), out var newPageSize) && newPageSize > 0)
+        {
+            pageSize = newPageSize;
 
-        // Reload users and report data with the new page size
-        await LoadUserPage();
-        await LoadReport();
+            totalUserPages = (int)Math.Ceiling((double)users.Count / pageSize);
+
+            if (currentUserPage > totalUserPages)
+            {
+                currentUserPage = totalUserPages;
+            }
+
+            await LoadUserPage();
+        }
     }
+
+    private async Task OnReportPageSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out var newPageSize) && newPageSize > 0)
+        {
+            reportPageSize = newPageSize;
+
+            totalPages = (int)Math.Ceiling((double)userReporters.Count / reportPageSize);
+
+            if (currentPage > totalPages)
+            {
+                currentPage = totalPages;
+            }
+
+            await LoadReport();
+        }
+    }
+
 }

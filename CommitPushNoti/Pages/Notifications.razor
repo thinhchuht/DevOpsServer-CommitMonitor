@@ -41,6 +41,10 @@
     <span>Page @_currentPage of @totalPages</span>
     <button @onclick="NextPage" disabled="@(_currentPage == totalPages)">Next</button>
 </div>
+<div>
+    <label for="pageSize">Page Size: </label>
+    <input type="number" id="pageSize" min="1" value="@pageSize" @onchange="OnPageSizeChanged" />
+</div>
 
 @code {
     private List<CommitDetail> commits = new();
@@ -81,10 +85,12 @@
 
     private async Task LoadCommits()
     {
-        // Lấy dữ liệu từ database
         var allCommits = await CommitDetailServices.GetPagedCommits(_currentPage, pageSize);
         commits = allCommits.Commits;
+
         totalPages = (int)Math.Ceiling((double)allCommits.TotalCount / pageSize);
+
+        // Cập nhật giao diện
         await InvokeAsync(StateHasChanged);
     }
 
@@ -102,6 +108,26 @@
         if (_currentPage > 1)
         {
             _currentPage--;
+            await LoadCommits();
+        }
+    }
+
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out var newPageSize) && newPageSize > 0)
+        {
+            pageSize = newPageSize;
+
+            // Tính lại tổng số trang
+            totalPages = (int)Math.Ceiling((double)commits.Count / pageSize);
+
+            // Đảm bảo trang hiện tại hợp lệ
+            if (_currentPage > totalPages)
+            {
+                _currentPage = totalPages;
+            }
+
+            // Tải lại dữ liệu cho trang mới
             await LoadCommits();
         }
     }
