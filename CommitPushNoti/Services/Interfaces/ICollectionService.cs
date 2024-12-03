@@ -1,6 +1,4 @@
-﻿using CommitPushNoti.Commons;
-
-namespace CommitPushNoti.Services.Interfaces
+﻿namespace CommitPushNoti.Services.Interfaces
 {
     public interface ICollectionService
     {

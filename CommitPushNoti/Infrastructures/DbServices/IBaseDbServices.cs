@@ -1,7 +1,4 @@
-﻿using CommitPushNoti.Commons;
-using System.Linq.Expressions;
-
-namespace CommitPushNoti.Infrastructures.DbServices
+﻿namespace CommitPushNoti.Infrastructures.DbServices
 {
     public interface IBaseDbServices
     {

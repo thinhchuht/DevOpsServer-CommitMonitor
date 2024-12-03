@@ -1,9 +1,7 @@
 ﻿@page "/user-reporter"
 @inject IUserService UserService
-@using CommitPushNoti.Data
 @inject NavigationManager NavigationManager
 @inject IConfiguration Configuration
-@using Microsoft.AspNetCore.SignalR
 
 <h3>User Reporter</h3>
 
@@ -65,7 +63,6 @@
         </tbody>
     </table>
 
-    <!-- Pagination -->
     <div class="pagination">
         <button @onclick="() => ChangePage(currentPage - 1)" disabled="@((currentPage <= 1))">Previous</button>
         <span>Page @currentPage of @totalPages</span>
