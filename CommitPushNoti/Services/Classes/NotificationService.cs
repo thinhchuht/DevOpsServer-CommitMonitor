@@ -11,13 +11,7 @@
         }
         public async Task TriggerNotificationAsync()
         {
-            await hubContext.Clients.All.SendAsync("RefreshCommits");
-        }
-
-        public async Task AddNotificationAsync(CommitNotification notification)
-        {
-            _notifications.Insert(0, notification);
-            await hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
+            await hubContext.Clients.All.SendAsync("Refresh");
         }
 
         public int GetTotalNotificationsCount()
@@ -25,11 +19,10 @@
             return _notifications.Count;
         }
 
-        public async Task<int> GetLineCount(CommitNotification notification, string pat)
+        public async Task<int> GetLineCount(CommitNotification notification, string commitId, string pat)
         {
             var projectName = notification.Resource.Repository.Project.Name;
             var repoId = notification.Resource.Repository.Id;
-            var commitId = notification.Resource.Commits.FirstOrDefault().CommitId;
 
             var uri = $"{notification.CollectionName}/{projectName}" +
                 $"/_apis/git/repositories/{notification.Resource.Repository.Id}" +

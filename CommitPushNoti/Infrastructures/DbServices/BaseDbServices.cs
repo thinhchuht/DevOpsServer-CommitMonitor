@@ -16,7 +16,7 @@
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.ToString());
+                logger.LogError(message: ex.ToString());
                 return ResponseModel.GetFailureResponse($"Something went wrong while adding ${typeof(T).Name}");
             }
         }

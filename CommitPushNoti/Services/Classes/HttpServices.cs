@@ -4,6 +4,8 @@
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly string _baseAddress;
+        private static readonly string[] separator = new[] { "\n", "\r\n" };
+
         public HttpServices(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
@@ -56,7 +58,7 @@
                 {
                     // Nếu countLines = true, đếm số dòng trong file
                     //json sẽ trả về fil
-                    var lineCount = json.Split(new[] { "\n", "\r\n" }, StringSplitOptions.None).Length;
+                    var lineCount = json.Split(separator, StringSplitOptions.None).Length;
                     return (T)Convert.ChangeType(lineCount, typeof(T)); // Trả về số dòng
                 }
                 return JsonSerializer.Deserialize<T>(json);
@@ -153,16 +155,19 @@
             {
                 var blocks = fileChangeResponse.DataProviders.FileDiffDataProvider.Blocks;
 
-                // Tính số dòng thay đổi
+                // Tính số dòng thay đổi :
+                // Khi ChangeType là 2 (modified) hoặc 3 (added), cộng OLinesCount ,
+                // Khi ChangeType là 1 (deleted), cộng MLinesCount
+                // Khi ChangeType là 0 (no change), không cộng gì
                 var totalModifiedLines = blocks
-                    .Where(block => block.ChangeType != 0) // Chỉ lấy các dòng có thay đổi
-                    .Sum(block => block.MLinesCount); // Tổng số dòng thay đổi
+                    .Sum(block =>
+                    block.ChangeType == 2 || block.ChangeType == 3 ? block.OLinesCount : block.ChangeType == 1 ? block.MLinesCount : 0); 
 
                 return totalModifiedLines;
             }
 
 
-            //trường hợp ra exception ( add hoặc thêm file)
+            //trường hợp ra exception ( add hoặc thêm file) :
             var commitFileChangeUri = $"{collectionName}/_apis/git/repositories/{repoId}/items?path={path}&api-version=6.0";
             var lineCount = await GetAsync<int>(commitFileChangeUri, pat, true);
 

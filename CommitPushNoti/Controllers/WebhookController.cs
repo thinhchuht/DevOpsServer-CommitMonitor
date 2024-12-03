@@ -7,7 +7,10 @@
         ICollectionService collectionService,
         IProjectService projectService,
         IRepositoryService repositoryService,
-        ICommitDetailServices commitDetailServices) : ControllerBase
+        ICommitDetailServices commitDetailServices,
+        IUserService userService,
+        IUserProjectService userProjectService,
+        IPullRequestService pullRequestService) : ControllerBase
     {
         private static string? _storedPAT;
 
@@ -42,26 +45,68 @@
                 {
                     return BadRequest("Invalid notification payload.");
                 }
-                var lineCount = await notificationService.GetLineCount(notification, _storedPAT);
-                notification.LineCount = lineCount;
+
+                var projectPart = notification.Resource.Repository.Url.Split("/_apis/")[0]; // Cắt URL trước phần _apis
+                var repoName = notification.Resource.Repository.Name;
+                var projectName = notification.Resource.Repository.Project.Name;
+
 
                 await collectionService.AddCollection(notification.ResourceContainers.Collection.Id, notification.CollectionName, notification.ResourceContainers.Collection.Url);
 
                 await projectService.AddProject(notification.Resource.Repository.Project, notification.ResourceContainers.Collection.Id);
 
                 await repositoryService.AddRepository(notification.Resource.Repository, notification.ResourceContainers.Project.Id);
-
-                var commit = notification.Resource.Commits.FirstOrDefault();
-                await commitDetailServices.AddCommitDetail(commit.CommitId, commit.Comment, notification.CreatedDate, notification.CommitUrl, lineCount, commit.Committer.Email, notification.Resource.Repository.Id);
-                var allCommits = await commitDetailServices.GetAllCommitDetails();
+                foreach(var commit in notification.Resource.Commits)
+                {
+                    var lineCount = await notificationService.GetLineCount(notification, commit.CommitId, _storedPAT);
+                    var commitUrl = $"{projectPart}/{projectName}/_git/{repoName}/commit/{commit.CommitId}";
+                    await userService.AddUser(new User(commit.Committer.Email, commit.Committer.Name));
+                    await userProjectService.AddUserProject(new UserProject(commit.Committer.Email, notification.ResourceContainers.Project.Id));
+                    await commitDetailServices.AddCommitDetail(commit.CommitId, commit.Comment, notification.CreatedDate, commitUrl, lineCount, commit.Committer.Email, notification.Resource.Repository.Id);
+                }
+                
                 await notificationService.TriggerNotificationAsync();
                 return Ok(new { message = "Notification received successfully." });
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                return Ok(new { message = $"Exception:{ex.ToString()}." });
+                return Ok(new { message = $"Exception:{ex}." });
             }
+        }
 
+        /// <summary>
+        /// API để devops có thể call đến khi 1 code được push lên
+        /// </summary>
+        /// <param name="notification">Tổng hợp các thông tin về commit đó</param>
+        /// <returns></returns>
+        [HttpPost("get-noti-pr")]
+        public async Task<IActionResult> ReceivePR([FromBody] PullRequestNotification notification)
+        {
+            try
+            {
+                if (notification == null)
+                {
+                    return BadRequest("Invalid notification payload.");
+                }
+                var newPr = new PullRequest(notification.Resource.PullRequestId, notification.Resource.Status,
+                    notification.CreatedDate, notification.Resource.Title, notification.Resource.Description, 
+                    notification.Resource.Url, notification.Resource.CreatedBy.Email, notification.Resource.Repository.Id);
+                if (notification.EventType == Constants.CreatedPullRequest)
+                {
+                    await pullRequestService.AddPullRequest(newPr);
+                    foreach (var commit in notification.Resource.Commits) 
+                    {
+                        await commitDetailServices.UpdateCommitDetail(commit.CommitId, newPr.Id);
+                    }
+                }
+                if (notification.EventType == Constants.MergedPullRequest) await pullRequestService.UpdatePullRequest(newPr);
+                await notificationService.TriggerNotificationAsync();
+                return Ok(new { message = "Notification received successfully." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { message = $"Exception:{ex}." });
+            }
         }
 
         /// <summary>
@@ -87,7 +132,7 @@
         [HttpPost("setup")]
         public async Task<IActionResult> SetupWebhook([FromBody] WebhookSetupRequest request)
         {
-            var result = await webhookService.SetupWebhooksAsync(request.WebhookUrl, request.PAT, request.CollectionName, request.ProjectName);
+            var result = await webhookService.SetupWebhooksAsync(request.WebhookUrl, request.EventType, request.PAT, request.CollectionName, request.ProjectName);
 
             if (!result)
             {

@@ -32,8 +32,8 @@
         [JsonPropertyName("lastUpdateTime")]
         public DateTime LastUpdateTime { get; set; }
         public string CollectionId { get; set; }
-        public Collection Collection { get; set; }
-        public List<UserProject> UserProjects { get; set; }
-        public List<Repository> Repositories { get; set; }
+        public virtual Collection Collection { get; set; }
+        public virtual List<UserProject> UserProjects { get; set; }
+        public virtual List<Repository> Repositories { get; set; }
     }
 }

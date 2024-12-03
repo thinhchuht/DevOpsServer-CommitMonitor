@@ -1,6 +1,6 @@
 ﻿namespace CommitPushNoti.Services.Classes
 {
-    public class CommitDetailServices(IBaseDbServices baseDbServices) : ICommitDetailServices
+    public class CommitDetailServices(IBaseDbServices baseDbServices, DevopsContext devopsContext) : ICommitDetailServices
     {
         public async Task<ResponseModel> AddCommitDetail(string id, string commitMessage, DateTime createDate, string commitUrl, int lineChange, string userEmail, string repositoryId)
         {
@@ -11,7 +11,7 @@
 
         public async Task<List<CommitDetail>> GetAllCommitDetails()
         {
-            return await baseDbServices.GetAllAsync<CommitDetail>();
+            return await devopsContext.CommitDetail.Include(cd => cd.User).Include(cd => cd.Repository).ToListAsync();
         }
 
         public async Task<(List<CommitDetail> Commits, int TotalCount)> GetPagedCommits(int page, int pageSize)
@@ -24,5 +24,11 @@
             return (commits, totalCount);
         }
 
+        public async Task<ResponseModel> UpdateCommitDetail(string commitId, int prId)
+        {
+            var commit = await baseDbServices.GetByIdAsync<CommitDetail>(commitId);
+            commit.PullRequestId = prId;
+            return await baseDbServices.UpdateAsync(commit);  
+        }
     }
 }

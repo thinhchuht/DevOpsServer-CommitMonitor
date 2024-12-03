@@ -13,6 +13,14 @@
             <label for="url">Webhook URL</label>
             <InputText id="url" @bind-Value="WebhookRequest.WebhookUrl" class="form-control" />
         </div>
+        <div class="form-group">
+            <label for="url">Event Type</label>
+            <InputSelect @bind-Value="WebhookRequest.EventType">
+                <option value="git.push">Pushed code</option>
+                <option value="git.pullrequest.created">Created PullRequest</option>
+                <option value="git.pullrequest.merged">Merged PullRequest</option>
+            </InputSelect>
+        </div>
 
         <div class="form-group">
             <label for="pat">Personal Access Token (PAT)</label>
@@ -73,6 +81,9 @@
         [Required(ErrorMessage ="Webhook URL is required")]
         [Url(ErrorMessage = "Invalid URL format")]
         public string WebhookUrl     { get; set; }
+
+        [Required(ErrorMessage = "Event Type is required")]
+        public string EventType { get; set; }
 
         [Required(ErrorMessage = "PAT is required")]
         public string PAT { get; set; }

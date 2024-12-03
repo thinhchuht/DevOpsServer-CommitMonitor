@@ -85,8 +85,7 @@ namespace CommitPushNoti.Infrastructures.Migrations
                 columns: table => new
                 {
                     UserEmail = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProjectId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    ProjectId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {

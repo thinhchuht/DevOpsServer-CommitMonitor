@@ -3,6 +3,7 @@
 @using CommitPushNoti.Services.Interfaces
 @using CommitPushNoti.Infrastructures.Models
 @inject NavigationManager NavigationManager
+@inject IConfiguration Configuration
 
 
 <h3>Notifications</h3>
@@ -10,7 +11,8 @@
 <table class="table">
     <thead>
         <tr>
-            <th>Commit ID</th>
+            <th>Collection Name</th>
+            <th>Project Name</th>
             <th>Commit Message</th>
             <th>Committer</th>
             <th>Commit URL</th>
@@ -22,7 +24,8 @@
         @foreach (var commit in commits)
         {
             <tr>
-                <td>@commit.Id</td>
+                <td>@commit.Repository.Project.Collection.Name</td>
+                <td>@commit.Repository.Project.Name</td>
                 <td>@commit.CommitMessage</td>
                 <td>@commit.User.Name</td>
                 <td><a href="@commit.CommitUrl" target="_blank">View Commit</a></td>
@@ -33,7 +36,6 @@
     </tbody>
 </table>
 
-<!-- Pagination nếu cần -->
 <div class="pagination">
     <button @onclick="PreviousPage" disabled="@(_currentPage == 1)">Previous</button>
     <span>Page @_currentPage of @totalPages</span>
@@ -43,28 +45,36 @@
 @code {
     private List<CommitDetail> commits = new();
     private int _currentPage = 1;
-    private int pageSize = 5;
+    private int pageSize;
     private int totalPages;
 
     protected override async Task OnInitializedAsync()
     {
+        pageSize = Configuration.GetValue<int>("PageSize");
         await LoadCommits();
-        
+
         // Kết nối SignalR
         connection = new HubConnectionBuilder()
         .WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub"), options =>
         {
             options.HttpMessageHandlerFactory = _ => new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-            };
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+                };
         })
         .Build();
 
-        connection.On("RefreshCommits", async () =>
-        {
-            await LoadCommits(); // Làm mới dữ liệu từ database
-        });
+        connection.On("Refresh", async () =>
+       {
+           if (connection.State == HubConnectionState.Connected)
+           {
+               await LoadCommits(); 
+           }
+           else
+           {
+               Console.WriteLine("SignalR connection not connected.");
+           }
+       });
 
         await connection.StartAsync();
     }
@@ -75,7 +85,7 @@
         var allCommits = await CommitDetailServices.GetPagedCommits(_currentPage, pageSize);
         commits = allCommits.Commits;
         totalPages = (int)Math.Ceiling((double)allCommits.TotalCount / pageSize);
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task NextPage()

@@ -4,6 +4,7 @@ using CommitPushNoti.Infrastructures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,16 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CommitPushNoti.Infrastructures.Migrations
 {
     [DbContext(typeof(DevopsContext))]
-    partial class DevopsContextModelSnapshot : ModelSnapshot
+    [Migration("20241202022427_Init")]
+    partial class Init
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.0")
-                .HasAnnotation("Proxies:ChangeTracking", false)
-                .HasAnnotation("Proxies:CheckEquality", false)
-                .HasAnnotation("Proxies:LazyLoading", true)
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -61,9 +61,6 @@ namespace CommitPushNoti.Infrastructures.Migrations
                     b.Property<int>("LineChange")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PullRequestId")
-                        .HasColumnType("int");
-
                     b.Property<string>("RepositoryId")
                         .HasColumnType("nvarchar(450)");
 
@@ -71,8 +68,6 @@ namespace CommitPushNoti.Infrastructures.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("PullRequestId");
 
                     b.HasIndex("RepositoryId");
 
@@ -123,41 +118,6 @@ namespace CommitPushNoti.Infrastructures.Migrations
                     b.HasIndex("CollectionId");
 
                     b.ToTable("Projects");
-                });
-
-            modelBuilder.Entity("CommitPushNoti.Infrastructures.Models.PullRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RepositoryId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Url")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserEmail")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RepositoryId");
-
-                    b.HasIndex("UserEmail");
-
-                    b.ToTable("PullRequests");
                 });
 
             modelBuilder.Entity("CommitPushNoti.Infrastructures.Models.Repository", b =>
@@ -214,10 +174,6 @@ namespace CommitPushNoti.Infrastructures.Migrations
 
             modelBuilder.Entity("CommitPushNoti.Infrastructures.Models.CommitDetail", b =>
                 {
-                    b.HasOne("CommitPushNoti.Infrastructures.Models.PullRequest", "PullRequest")
-                        .WithMany("CommitDetails")
-                        .HasForeignKey("PullRequestId");
-
                     b.HasOne("CommitPushNoti.Infrastructures.Models.Repository", "Repository")
                         .WithMany("CommitDetails")
                         .HasForeignKey("RepositoryId");
@@ -225,8 +181,6 @@ namespace CommitPushNoti.Infrastructures.Migrations
                     b.HasOne("CommitPushNoti.Infrastructures.Models.User", "User")
                         .WithMany("CommitDetails")
                         .HasForeignKey("UserEmail");
-
-                    b.Navigation("PullRequest");
 
                     b.Navigation("Repository");
 
@@ -240,21 +194,6 @@ namespace CommitPushNoti.Infrastructures.Migrations
                         .HasForeignKey("CollectionId");
 
                     b.Navigation("Collection");
-                });
-
-            modelBuilder.Entity("CommitPushNoti.Infrastructures.Models.PullRequest", b =>
-                {
-                    b.HasOne("CommitPushNoti.Infrastructures.Models.Repository", "Repository")
-                        .WithMany("PullRequests")
-                        .HasForeignKey("RepositoryId");
-
-                    b.HasOne("CommitPushNoti.Infrastructures.Models.User", "User")
-                        .WithMany("PullRequests")
-                        .HasForeignKey("UserEmail");
-
-                    b.Navigation("Repository");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CommitPushNoti.Infrastructures.Models.Repository", b =>
@@ -297,23 +236,14 @@ namespace CommitPushNoti.Infrastructures.Migrations
                     b.Navigation("UserProjects");
                 });
 
-            modelBuilder.Entity("CommitPushNoti.Infrastructures.Models.PullRequest", b =>
-                {
-                    b.Navigation("CommitDetails");
-                });
-
             modelBuilder.Entity("CommitPushNoti.Infrastructures.Models.Repository", b =>
                 {
                     b.Navigation("CommitDetails");
-
-                    b.Navigation("PullRequests");
                 });
 
             modelBuilder.Entity("CommitPushNoti.Infrastructures.Models.User", b =>
                 {
                     b.Navigation("CommitDetails");
-
-                    b.Navigation("PullRequests");
 
                     b.Navigation("UserProject");
                 });

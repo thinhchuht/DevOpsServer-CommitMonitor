@@ -4,6 +4,7 @@ using CommitPushNoti.Infrastructures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,16 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CommitPushNoti.Infrastructures.Migrations
 {
     [DbContext(typeof(DevopsContext))]
-    partial class DevopsContextModelSnapshot : ModelSnapshot
+    [Migration("20241202075220_Update1")]
+    partial class Update1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.0")
-                .HasAnnotation("Proxies:ChangeTracking", false)
-                .HasAnnotation("Proxies:CheckEquality", false)
-                .HasAnnotation("Proxies:LazyLoading", true)
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -61,7 +61,7 @@ namespace CommitPushNoti.Infrastructures.Migrations
                     b.Property<int>("LineChange")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PullRequestId")
+                    b.Property<int>("PullRequestId")
                         .HasColumnType("int");
 
                     b.Property<string>("RepositoryId")
@@ -216,7 +216,9 @@ namespace CommitPushNoti.Infrastructures.Migrations
                 {
                     b.HasOne("CommitPushNoti.Infrastructures.Models.PullRequest", "PullRequest")
                         .WithMany("CommitDetails")
-                        .HasForeignKey("PullRequestId");
+                        .HasForeignKey("PullRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("CommitPushNoti.Infrastructures.Models.Repository", "Repository")
                         .WithMany("CommitDetails")

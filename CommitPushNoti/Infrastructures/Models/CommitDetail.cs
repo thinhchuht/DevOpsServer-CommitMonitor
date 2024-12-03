@@ -5,8 +5,6 @@
         public CommitDetail(string id, string commitMessage, DateTime createDate, string commitUrl, int lineChange, string userEmail, string repositoryId)
         {
             Id            = id;
-            //Collection    = Repository.Project.Collection.Name;
-            //Project       = Repository.Project.Name;
             CommitMessage = commitMessage;
             CreateDate    = createDate;
             CommitUrl     = commitUrl;
@@ -15,16 +13,16 @@
             RepositoryId  = repositoryId;
         }
 
-        public string       Id            { get; set; }
-        //public string     Collection    { get; set; }
-        //public string     Project       { get; set; }
-        public string       CommitMessage { get; set; }
-        public DateTime     CreateDate    { get; set; }
-        public string       CommitUrl     { get; set; }
-        public int          LineChange    { get; set; }
-        public string       UserEmail     { get; set; }
-        public string       RepositoryId  { get; set; }
-        public Repository   Repository    { get; set; }
-        public User         User          { get; set; }
+        public string        Id            { get; set; }
+        public string        CommitMessage { get; set; }
+        public DateTime      CreateDate    { get; set; }
+        public string        CommitUrl     { get; set; }
+        public int           LineChange    { get; set; }
+        public string        UserEmail     { get; set; }
+        public string        RepositoryId  { get; set; }
+        public virtual Repository    Repository    { get; set; }
+        public virtual User          User          { get; set; }
+        public int?          PullRequestId { get; set; }
+        public virtual PullRequest?  PullRequest   { get; set; }
     }
 }

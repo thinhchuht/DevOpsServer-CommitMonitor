@@ -8,6 +8,6 @@
   
         //List<CommitNotification> GetNotificationsPaged(int page, int pageSize);
         int GetTotalNotificationsCount();
-        Task<int> GetLineCount(CommitNotification notification, string pat);
+        Task<int> GetLineCount(CommitNotification notification, string commitId, string pat);
     }
 }

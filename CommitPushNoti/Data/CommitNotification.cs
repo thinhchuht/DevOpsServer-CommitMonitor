@@ -13,28 +13,6 @@
         public DateTime           CreatedDate        { get; set; }
         public int                LineCount          { get; set; }
 
-        public string CommitUrl
-        {
-            get
-            {
-                if (Resource?.Repository?.Url != null && Resource?.Commits?.FirstOrDefault()?.CommitId != null)
-                {
-                    // Cắt URL gốc đến phần "http://devops/{projectName}/_apis/projects/{projectId}" và nối thêm thông tin commit
-                    var baseUrl = Resource.Repository.Url;
-                    var projectPart = baseUrl.Split("/_apis/")[0]; // Cắt URL trước phần _apis
-
-                    // Lấy tên repository từ thông tin repository
-                    var repoName = Resource.Repository.Name;
-                    var commitId = Resource.Commits?.FirstOrDefault()?.CommitId;
-                    var projectName = Resource.Repository.Project.Name; // Tên dự án
-
-                    // Xây dựng URL commit với tên dự án
-                    return $"{projectPart}/{projectName}/_git/{repoName}/commit/{commitId}";
-                }
-                return string.Empty;
-            }
-        }
-
         public string CollectionName
         {
             get
@@ -64,15 +42,7 @@
         public List<Commit> Commits    { get; set; }
     }
 
-    //public class Repository
-    //{
-    //    public string  Id            { get; set; }
-    //    public string  Name          { get; set; }
-    //    public Project Project       { get; set; }
-    //    public string  Url           { get; set; }
-    //    public string  RemoteUrl     { get; set; }
-    //    public string  DefaultBranch { get; set; }
-    //}
+
 
     public class Commit
     {
@@ -97,12 +67,6 @@
         public DateTime Date  { get; set; }
     }
 
-    //public class Project
-    //{
-    //    public string Id   { get; set; }
-    //    public string Name { get; set; }
-    //    public string Url  { get; set; }
-    //}
     public class ResourceContainers
     {
         public Collection Collection { get; set; }

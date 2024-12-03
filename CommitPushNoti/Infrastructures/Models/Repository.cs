@@ -16,7 +16,8 @@
         public string             Url           { get; set; }
         public string             RemoteUrl     { get; set; }
         public string             ProjectId     { get; set; }
-        public Project            Project       { get; set; }
-        public List<CommitDetail> CommitDetails { get; set; }
+        public virtual Project            Project       { get; set; }
+        public virtual List<CommitDetail> CommitDetails { get; set; }
+        public virtual List<PullRequest>  PullRequests  { get; set; }
     }
 }

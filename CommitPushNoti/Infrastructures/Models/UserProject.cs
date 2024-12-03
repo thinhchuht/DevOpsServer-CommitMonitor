@@ -2,10 +2,15 @@
 {
     public class UserProject
     {
-        public Guid    Id        { get; set; }
+        public UserProject(string userEmail, string projectId)
+        {
+            UserEmail = userEmail;
+            ProjectId = projectId;
+        }
+
         public string  UserEmail { get; set; }
-        public User    User      { get; set; }
+        public virtual User    User      { get; set; }
         public string  ProjectId { get; set; }
-        public Project Project   { get; set; }
+        public virtual Project Project   { get; set; }
     }
 }

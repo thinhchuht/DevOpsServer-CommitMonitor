@@ -1,4 +1,5 @@
-﻿public class WebhookService(IHttpServices httpServices) : IWebhookService
+﻿namespace CommitPushNoti.Services.Classes;
+public class WebhookService(IHttpServices httpServices) : IWebhookService
 {
 
     /// <summary>
@@ -8,7 +9,7 @@
     /// <param name="webhookUrl">url để devops gọi để gửi thông báo về</param>
     /// <param name="pat"></param>
     /// <returns></returns>
-    public async Task<bool> SetupWebhooksAsync(string webhookUrl, string pat, string collectionName = "", string projectName = "")
+    public async Task<bool> SetupWebhooksAsync(string webhookUrl, string eventType, string pat, string collectionName = "", string projectName = "")
     {
         try
         {
@@ -22,7 +23,7 @@
                     foreach (var projectItem in projects.Value)
                     {
                         var subcriptionUri = $"{collectionsItem.Name}/_apis/hooks/subscriptions?api-version=6.0";
-                        var response = await HandlePostSubcription(subcriptionUri,webhookUrl, pat, projectItem);
+                        var response = await HandlePostSubcription(subcriptionUri,webhookUrl,eventType, pat, projectItem);
                     }
                 }
             }
@@ -36,7 +37,7 @@
                     var projects = await httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
                     foreach (var projectItem in projects.Value)
                     {
-                        var response = await HandlePostSubcription(subcriptionUri, webhookUrl, pat, projectItem);
+                        var response = await HandlePostSubcription(subcriptionUri, webhookUrl,eventType, pat, projectItem);
                     }
                 } 
                 else
@@ -44,7 +45,7 @@
                     var projectCounts = await httpServices.GetAsync<ProjectsResponse>(projectUri, pat);
                     var projects = projectCounts.Value.FirstOrDefault(x => x.Name.Equals(projectName));
                     var projectItem = (await httpServices.GetAsync<ProjectsResponse>(projectUri, pat)).Value.FirstOrDefault(x => x.Name.Equals(projectName));
-                    var response = await HandlePostSubcription(subcriptionUri, webhookUrl, pat, projectItem);
+                    var response = await HandlePostSubcription(subcriptionUri, webhookUrl,eventType, pat, projectItem);
                 }
             }
             return true;
@@ -56,12 +57,12 @@
         }
     }
 
-    private async Task<HttpResponseMessage> HandlePostSubcription(string subcriptionUri, string webhookUrl, string pat, Project projectItem)
+    private async Task<HttpResponseMessage> HandlePostSubcription(string subcriptionUri, string webhookUrl, string eventType, string pat, Project projectItem)
     {
         var payload = new
         {
             publisherId      = "tfs",
-            eventType        = "git.push",
+            eventType        = eventType,
             resourceVersion  = "1.0",
             consumerId       = "webHooks",
             consumerActionId = "httpRequest",

@@ -1,0 +1,173 @@
+﻿@page "/user-reporter"
+@inject IUserService UserService
+@using CommitPushNoti.Data
+@inject NavigationManager NavigationManager
+@inject IConfiguration Configuration
+@using Microsoft.AspNetCore.SignalR
+
+<h3>User Reporter</h3>
+
+<div>
+    <h4>Select Users</h4>
+    @foreach (var user in pagedUsers)
+    {
+        <div>
+            <input type="checkbox" checked="@selectedEmails.Contains(user.Email)" @onchange="(e) => OnUserSelectionChanged(user.Email, e)" />
+            <label>@user.Name (@user.Email)</label>
+        </div>
+    }
+
+    <!-- Pagination for user checkboxes -->
+    <div class="pagination">
+        <button @onclick="() => ChangeUserPage(currentUserPage - 1)" disabled="@((currentUserPage <= 1))">Previous</button>
+        <span>Page @currentUserPage of @totalUserPages</span>
+        <button @onclick="() => ChangeUserPage(currentUserPage + 1)" disabled="@((currentUserPage >= totalUserPages))">Next</button>
+    </div>
+    
+    <div>
+        <label for="pageSize">Page Size: </label>
+        <input type="number" id="pageSize" min="1" value="@pageSize" @onchange="OnPageSizeChanged" />
+
+    </div>
+</div>
+
+<div>
+    <h4>Select Date Range</h4>
+    <input type="datetime-local" @bind="FromDate" />
+    <span>to</span>
+    <input type="datetime-local" @bind="ToDate" />
+    <button @onclick="OnDateFilterChanged">Apply Date Filter</button>
+</div>
+
+<h4>User Report</h4>
+@if (userReporters != null && userReporters.Any())
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>PR Count</th>
+                <th>Commit Count</th>
+                <th>Line Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var report in userReporters)
+            {
+                <tr>
+                    <td>@report.Username</td>
+                    <td>@report.Email</td>
+                    <td>@report.PRCount</td>
+                    <td>@report.CommitCount</td>
+                    <td>@report.LineCount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <button @onclick="() => ChangePage(currentPage - 1)" disabled="@((currentPage <= 1))">Previous</button>
+        <span>Page @currentPage of @totalPages</span>
+        <button @onclick="() => ChangePage(currentPage + 1)" disabled="@((currentPage >= totalPages))">Next</button>
+    </div>
+}
+else
+{
+    <p>No data available for the selected users and date range.</p>
+}
+
+@code {
+    private List<User> users = new List<User>();
+    public List<CommitPushNoti.Data.UserReporter> userReporters;
+    private HashSet<string> selectedEmails = new HashSet<string>(); // Store selected emails
+    private int currentPage = 1; // Page for reports
+    private int totalPages;
+    private int pageSize = 10; // Default page size for reports
+
+    // New variables for user pagination
+    private int currentUserPage = 1; // Current page for users
+    private int totalUserPages; // Total number of pages for users
+    private List<User> pagedUsers = new List<User>(); // Users in the current page
+
+    private DateTime FromDate { get; set; } = DateTime.Now.AddMonths(-1); // Default to 1 month ago
+    private DateTime ToDate { get; set; } = DateTime.Now;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAndReports();
+    }
+
+    private async Task LoadUsersAndReports()
+    {
+        users = await UserService.GetAllUser(); // Get all users
+        selectedEmails = new HashSet<string>(users.Select(u => u.Email)); // Select all users by default
+        totalUserPages = (int)Math.Ceiling((double)users.Count / pageSize); // Calculate total pages for users
+        await LoadUserPage(); // Load the first page of users
+        await LoadReport(); // Load reports for selected users
+    }
+
+    private async Task LoadUserPage()
+    {
+        // Get users for the current page
+        pagedUsers = users.Skip((currentUserPage - 1) * pageSize).Take(pageSize).ToList();
+        await InvokeAsync(StateHasChanged); // Update the UI with the paged users
+    }
+
+    private async Task LoadReport()
+    {
+        var selectedEmailsList = selectedEmails.ToList();
+        var userReports = await UserService.GetUserReport(selectedEmailsList, FromDate, ToDate);
+        totalPages = (int)Math.Ceiling((double)userReports.Count / pageSize); // Calculate total pages for reports
+        userReporters = userReports.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+        await InvokeAsync(StateHasChanged); // Update the UI with the report data
+    }
+
+    private async Task ChangeUserPage(int page)
+    {
+        if (page >= 1 && page <= totalUserPages) // Check if the page is valid
+        {
+            currentUserPage = page;
+            await LoadUserPage(); // Reload the users for the new page
+        }
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page >= 1 && page <= totalPages) // Check if the page is valid
+        {
+            currentPage = page;
+            await LoadReport(); // Reload the report for the new page
+        }
+    }
+
+    private async Task OnUserSelectionChanged(string email, ChangeEventArgs e)
+    {
+        if ((bool)e.Value)
+        {
+            selectedEmails.Add(email); // Add email to selected list
+        }
+        else
+        {
+            selectedEmails.Remove(email); // Remove email from selected list
+        }
+        await LoadReport(); // Reload the report after user selection changes
+    }
+
+    private async Task OnDateFilterChanged()
+    {
+        await LoadReport(); // Apply the date filter and reload the report
+    }
+
+    private async Task OnPageSizeChanged()
+    {
+        // Recalculate total pages based on the new pageSize
+        totalUserPages = (int)Math.Ceiling((double)users.Count / pageSize);
+        totalPages = (int)Math.Ceiling((double)userReporters.Count / pageSize);
+
+        // Reload users and report data with the new page size
+        await LoadUserPage();
+        await LoadReport();
+    }
+}
